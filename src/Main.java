@@ -7,8 +7,8 @@ import java.util.function.UnaryOperator;
 public class Main {
 
     public static void main(String[] args) throws Throwable {
-        //new Thread(new FormDots()).start();
-        digits();
+        new Thread(new FormDots()).start();
+//        digits();
     }
 
     private static void digits() throws Throwable {
@@ -60,7 +60,9 @@ public class Main {
             }
 
             int epochs = 10000;
-            double learningRate = 0.0012;
+            double learningRate = 0.001;
+            double moment = 0;
+            double[][][] deltaWs = null;
             for (int i = 1; i < epochs; i++) {
                 int right = 0;
                 double errorSum = 0;
@@ -84,7 +86,7 @@ public class Main {
                     for (int k = 0; k < 10; k++) {
                         errorSum += (targets[k] - outputs[k]) * (targets[k] - outputs[k]);
                     }
-                    teacher.backpropagation(targets, learningRate);
+                    deltaWs = teacher.backpropagation(targets, learningRate, moment, deltaWs);
                 }
                 System.out.println("epoch: " + i + ". correct: " + right + ". error: " + errorSum);
             }

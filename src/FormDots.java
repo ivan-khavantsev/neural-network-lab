@@ -26,11 +26,14 @@ public class FormDots extends JFrame implements Runnable, MouseListener {
 
     }
 
+    private static final int devider = 4;
+
+
     private final int w = 1280;
     private final int h = 720;
 
     private BufferedImage img = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
-    private BufferedImage pimg = new BufferedImage(w / 8, h / 8, BufferedImage.TYPE_INT_RGB);
+    private BufferedImage pimg = new BufferedImage(w / devider, h / devider, BufferedImage.TYPE_INT_RGB);
 
     private NeuralNetwork nn;
     private TeacherBackPropagation teacher;
@@ -38,9 +41,9 @@ public class FormDots extends JFrame implements Runnable, MouseListener {
     private List<Point> points = new ArrayList<>();
 
     public FormDots() {
-        UnaryOperator<Double> sigmoid = (UnaryOperator<Double> & Serializable) x -> 1 / (1 + Math.exp(-x));
+        UnaryOperator<Double> sigmoid = (UnaryOperator<Double> & Serializable) x ->  1 / (1 + Math.exp(-x));
         UnaryOperator<Double> dsigmoid = (UnaryOperator<Double> & Serializable) y -> y * (1 - y);
-        nn = new NeuralNetwork(sigmoid, 2, 15, 15, 2);
+        nn = new NeuralNetwork(sigmoid, 2, 32, 32, 2);
         teacher = new TeacherBackPropagation(nn, dsigmoid);
 
         this.setSize(w + 16, h + 38);
@@ -57,27 +60,33 @@ public class FormDots extends JFrame implements Runnable, MouseListener {
             this.repaint();
         }
     }
-
+    double[][][] deltaws = null;
     @Override
     public void paint(Graphics g) {
         if(points.size() > 0) {
-            for (int k = 0; k < 10000; k++) {
+            double errorSum = 0;
+            int cycles = 300;
+            for (int k = 0; k < cycles; k++) {
                 Point p = points.get(k % points.size()); // Проходимся по каждой точке
                 double nx = (double) p.x / w - 0.5; // Получение значение координаты точки от -1 до 1
                 double ny = (double) p.y / h - 0.5; // Получение значение координаты точки от -1 до 1
-                nn.feedForward(new double[]{nx, ny});
+                double[] output1 = nn.feedForward(new double[]{nx, ny});
 
                 // Указываем ожидаемые значения конечных слоёв
                 double[] targets = new double[2];
                 if (p.type == 0) targets[0] = 1;
                 else targets[1] = 1;
-                teacher.backpropagation(targets, 0.005);
+                for(int kk=0;kk<2;kk++){
+                    errorSum += (targets[kk] - output1[kk]) * (targets[kk] - output1[kk]);
+                }
+                deltaws = teacher.backpropagation(targets, 0.01, -0.2, deltaws);
             }
+            System.out.println("Error: " + errorSum / cycles);
         }
-        for (int i = 0; i < w / 8; i++) {
-            for (int j = 0; j < h / 8; j++) {
-                double nx = (double) i / w * 8 - 0.5;
-                double ny = (double) j / h * 8 - 0.5;
+        for (int i = 0; i < w / devider; i++) {
+            for (int j = 0; j < h / devider; j++) {
+                double nx = (double) i / w * devider - 0.5;
+                double ny = (double) j / h * devider - 0.5;
                 double[] outputs = nn.feedForward(new double[]{nx, ny});
                 double green = Math.max(0, Math.min(1, outputs[0] - outputs[1] + 0.5));
                 double blue = 1 - green;

@@ -57,7 +57,7 @@ public class FormDigits extends JFrame implements Runnable, MouseListener, Mouse
                 if(mousePressed != 0) {
                     double dist = (i - mx) * (i - mx) + (j - my) * (j - my);
                     if(dist < 1) dist = 1;
-                    dist *= dist * dist;
+                    dist *= dist;
                     if(mousePressed == 1) colors[i][j] += 0.1 / dist;
                     else colors[i][j] -= 0.1 / dist;
                     if (colors[i][j] > 1) colors[i][j] = 1;
