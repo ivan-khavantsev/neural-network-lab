@@ -5,7 +5,6 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.image.BufferedImage;
 import java.io.*;
-import java.util.Base64;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.function.UnaryOperator;
@@ -26,7 +25,7 @@ public class FormDots extends JFrame implements Runnable, MouseListener {
 
     }
 
-    private static final int devider = 4;
+    private static final int devider = 8;
 
 
     private final int w = 1280;
@@ -43,7 +42,7 @@ public class FormDots extends JFrame implements Runnable, MouseListener {
     public FormDots() {
         UnaryOperator<Double> sigmoid = (UnaryOperator<Double> & Serializable) x ->  1 / (1 + Math.exp(-x));
         UnaryOperator<Double> dsigmoid = (UnaryOperator<Double> & Serializable) y -> y * (1 - y);
-        nn = new NeuralNetwork(sigmoid, 2, 32, 32, 2);
+        nn = new NeuralNetwork(sigmoid, 2, 40, 40, 2);
         teacher = new TeacherBackPropagation(nn, dsigmoid);
 
         this.setSize(w + 16, h + 38);
@@ -60,12 +59,12 @@ public class FormDots extends JFrame implements Runnable, MouseListener {
             this.repaint();
         }
     }
-    double[][][] deltaws = null;
+    TeacherBackPropagation.PreviousState previousState = null;
     @Override
     public void paint(Graphics g) {
         if(points.size() > 0) {
             double errorSum = 0;
-            int cycles = 300;
+            int cycles = 10000;
             for (int k = 0; k < cycles; k++) {
                 Point p = points.get(k % points.size()); // Проходимся по каждой точке
                 double nx = (double) p.x / w - 0.5; // Получение значение координаты точки от -1 до 1
@@ -77,11 +76,11 @@ public class FormDots extends JFrame implements Runnable, MouseListener {
                 if (p.type == 0) targets[0] = 1;
                 else targets[1] = 1;
                 for(int kk=0;kk<2;kk++){
-                    errorSum += (targets[kk] - output1[kk]) * (targets[kk] - output1[kk]);
+                  //  errorSum += (targets[kk] - output1[kk]) * (targets[kk] - output1[kk]);
                 }
-                deltaws = teacher.backpropagation(targets, 0.01, -0.2, deltaws);
+                previousState = teacher.backpropagation(targets, 0.01, 0.2, previousState);
             }
-            System.out.println("Error: " + errorSum / cycles);
+           // System.out.println("Error: " + errorSum / cycles);
         }
         for (int i = 0; i < w / devider; i++) {
             for (int j = 0; j < h / devider; j++) {

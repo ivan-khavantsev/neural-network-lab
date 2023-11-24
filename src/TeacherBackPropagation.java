@@ -10,11 +10,16 @@ public class TeacherBackPropagation {
         this.derivative = derivative;
     }
 
+    public record PreviousState(double[][][] deltaWs, double[][] prevousBieses){}
 
-    public double[][][] backpropagation(double[] targets, double learningRate, double moment, double[][][] deltaWs) {
-        if(deltaWs == null){
-            deltaWs = new double[nn.layers.length][][];
+
+    public PreviousState backpropagation(double[] targets, double learningRate, double moment, PreviousState previousState) {
+        if(previousState == null){
+            previousState = new PreviousState(new double[nn.layers.length][][],new double[nn.layers.length][]);
         }
+
+        double[][][] deltaWs = previousState.deltaWs;
+        double[][] previousBiases = previousState.prevousBieses;
 
         Layer ol = nn.layers[nn.layers.length - 1]; // Выходной слой
 
@@ -52,7 +57,7 @@ public class TeacherBackPropagation {
                         deltaWs[k] = new double[cl.size][nl.size];
                     }
 
-                    double deltaW = gradients[i] * (nl.neurons[j] * learningRate) - (moment * deltaWs[k][i][j]);
+                    double deltaW = gradients[i] * (nl.neurons[j] * learningRate) + (moment * deltaWs[k][i][j]);
                     deltaWs[k][i][j] = deltaW;
                     nl.weights[j][i] = nl.weights[j][i] + deltaW;
                 }
@@ -60,9 +65,15 @@ public class TeacherBackPropagation {
 
             // Обновляем байесы
             for (int i = 0; i < cl.size; i++) {
-                cl.biases[i] += gradients[i];
+                if(previousBiases[k+1] == null){
+                    previousBiases[k+1] = new double[cl.size];
+                }
+                double biasDelta = (gradients[i] * learningRate) + (moment * previousBiases[k+1][i]);
+                cl.biases[i] += biasDelta;
+                previousBiases[k+1][i] = biasDelta;
             }
         }
-        return deltaWs;
+        PreviousState previousState1 = new PreviousState(deltaWs, previousBiases);
+        return previousState1;
     }
 }
