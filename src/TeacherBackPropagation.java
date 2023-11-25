@@ -56,11 +56,11 @@ public class TeacherBackPropagation {
                     }
 
                     // Изменение, которое нужно произвести в весе следующего слоя
-                    double deltaWeight = gradients[i] * (nl.neurons[j] * learningRate) + (moment * state.deltaWeights[nli][i][j]);
-                    // Сохраняем все дельты в статус, для следующего раза
-                    state.deltaWeights[nli][i][j] = deltaWeight;
+                    double deltaWeight = gradients[i] * nl.neurons[j] * learningRate + moment * state.deltaWeights[nli][i][j];
                     // Обновляем вес
                     nl.weights[j][i] = nl.weights[j][i] + deltaWeight;
+                    // Сохраняем все дельты в статус, для следующего раза
+                    state.deltaWeights[nli][i][j] = deltaWeight;
                 }
             }
 
@@ -70,7 +70,7 @@ public class TeacherBackPropagation {
                     state.deltaBieses[cli] = new double[cl.size];
                 }
                 // Вычисляем дельту для байеса текущего слоя
-                double deltaBias = (gradients[i] * learningRate) + (moment * state.deltaBieses[cli][i]);
+                double deltaBias = gradients[i] * learningRate + moment * state.deltaBieses[cli][i];
                 // Обновляем байес
                 cl.biases[i] += deltaBias;
                 // Сохраняем все дельты в статус, для следующего раза
