@@ -4,27 +4,18 @@ public class TeacherBackPropagation {
 
     public UnaryOperator<Double> derivative;
     public NeuralNetwork nn;
-    
-    public TeacherBackPropagation(NeuralNetwork nn, UnaryOperator<Double> derivative){
+
+    public TeacherBackPropagation(NeuralNetwork nn, UnaryOperator<Double> derivative) {
         this.nn = nn;
         this.derivative = derivative;
     }
 
-    public static class State {
-        double[][][] deltaWs;
-        double[][] previousBieses;
-    }
-
-
     public void backpropagation(double[] targets, double learningRate, double moment, State state) {
 
-        if(state.deltaWs == null || state.previousBieses == null){
-            state.deltaWs = new double[nn.layers.length][][];
-            state.previousBieses = new double[nn.layers.length][];
+        if (state.deltaWeights == null || state.deltaBieses == null) {
+            state.deltaWeights = new double[nn.layers.length][][];
+            state.deltaBieses = new double[nn.layers.length][];
         }
-
-        double[][][] deltaWs = state.deltaWs;
-        double[][] previousBiases = state.previousBieses;
 
         Layer ol = nn.layers[nn.layers.length - 1]; // Выходной слой
 
@@ -36,9 +27,10 @@ public class TeacherBackPropagation {
 
         // Повторяем всё для каждого скрытого слоя
         double[] gradients;
-        for (int k = nn.layers.length - 2; k >= 0; k--) {
-            Layer nl = nn.layers[k]; // New layer, следующий слой (в обратном порядке идём)
-            Layer cl = nn.layers[k + 1]; // Current layer, текущий слой
+        for (int nli = nn.layers.length - 2; nli >= 0; nli--) { // Next Layer Index
+            Layer nl = nn.layers[nli]; // New layer, следующий слой (в обратном порядке идём)
+            int cli = nli + 1; // Current Layer Index
+            Layer cl = nn.layers[cli]; // Current layer, текущий слой
 
             gradients = new double[cl.size];
             for (int i = 0; i < cl.size; i++) {
@@ -58,25 +50,30 @@ public class TeacherBackPropagation {
             // Вычисляем и устанавливаем новые веса для следующего слоя
             for (int i = 0; i < cl.size; i++) {
                 for (int j = 0; j < nl.size; j++) {
-                    if(deltaWs[k] == null){
-                        deltaWs[k] = new double[cl.size][nl.size];
+                    if (state.deltaWeights[nli] == null) {
+                        state.deltaWeights[nli] = new double[cl.size][nl.size];
                     }
 
-                    double deltaW = gradients[i] * (nl.neurons[j] * learningRate) + (moment * deltaWs[k][i][j]);
-                    deltaWs[k][i][j] = deltaW;
-                    nl.weights[j][i] = nl.weights[j][i] + deltaW;
+                    double deltaWeight = gradients[i] * (nl.neurons[j] * learningRate) + (moment * state.deltaWeights[nli][i][j]);
+                    state.deltaWeights[nli][i][j] = deltaWeight;
+                    nl.weights[j][i] = nl.weights[j][i] + deltaWeight;
                 }
             }
 
             // Обновляем байесы
             for (int i = 0; i < cl.size; i++) {
-                if(previousBiases[k+1] == null){
-                    previousBiases[k+1] = new double[cl.size];
+                if (state.deltaBieses[cli] == null) {
+                    state.deltaBieses[cli] = new double[cl.size];
                 }
-                double biasDelta = (gradients[i] * learningRate) + (moment * previousBiases[k+1][i]);
+                double biasDelta = (gradients[i] * learningRate) + (moment * state.deltaBieses[cli][i]);
                 cl.biases[i] += biasDelta;
-                previousBiases[k+1][i] = biasDelta;
+                state.deltaBieses[cli][i] = biasDelta;
             }
         }
+    }
+
+    public static class State {
+        double[][][] deltaWeights;
+        double[][] deltaBieses;
     }
 }
