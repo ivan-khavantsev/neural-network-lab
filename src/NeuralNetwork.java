@@ -16,9 +16,9 @@ public class NeuralNetwork implements Serializable {
             if (i < sizes.length - 1) nextSize = sizes[i + 1];
             layers[i] = new Layer(sizes[i], nextSize);
             for (int j = 0; j < sizes[i]; j++) {
-                layers[i].biases[j] = Math.random() * 2.0 - 1.0;
+                layers[i].biases[j] = Math.random() * 2.0 - 1.0; // -1.0 to 1.0
                 for (int k = 0; k < nextSize; k++) {
-                    layers[i].weights[j][k] = Math.random() * 2.0 - 1.0;
+                    layers[i].weights[j][k] = Math.random() * 2.0 - 1.0; // -1.0 to 1.0
                 }
             }
         }
@@ -26,16 +26,16 @@ public class NeuralNetwork implements Serializable {
 
     public double[] feedForward(double[] inputs) {
         System.arraycopy(inputs, 0, layers[0].neurons, 0, inputs.length);
-        for (int i = 1; i < layers.length; i++) {
-            Layer l = layers[i - 1];
-            Layer l1 = layers[i];
-            for (int j = 0; j < l1.size; j++) {
-                l1.neurons[j] = 0;
-                for (int k = 0; k < l.size; k++) {
-                    l1.neurons[j] += l.neurons[k] * l.weights[k][j];
+        for (int l = 1; l < layers.length; l++) {
+            Layer cl = layers[l - 1];
+            Layer nl = layers[l];
+            for (int i = 0; i < nl.size; i++) {
+                nl.neurons[i] = 0;
+                for (int j = 0; j < cl.size; j++) {
+                    nl.neurons[i] += cl.neurons[j] * cl.weights[j][i];
                 }
-                l1.neurons[j] += l1.biases[j];
-                l1.neurons[j] = activation.apply(l1.neurons[j]);
+                nl.neurons[i] += nl.biases[i];
+                nl.neurons[i] = activation.apply(nl.neurons[i]);
             }
         }
         return layers[layers.length - 1].neurons;

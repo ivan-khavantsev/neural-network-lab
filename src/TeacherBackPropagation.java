@@ -10,16 +10,21 @@ public class TeacherBackPropagation {
         this.derivative = derivative;
     }
 
-    public record PreviousState(double[][][] deltaWs, double[][] prevousBieses){}
+    public static class State {
+        double[][][] deltaWs;
+        double[][] previousBieses;
+    }
 
 
-    public PreviousState backpropagation(double[] targets, double learningRate, double moment, PreviousState previousState) {
-        if(previousState == null){
-            previousState = new PreviousState(new double[nn.layers.length][][],new double[nn.layers.length][]);
+    public void backpropagation(double[] targets, double learningRate, double moment, State state) {
+
+        if(state.deltaWs == null || state.previousBieses == null){
+            state.deltaWs = new double[nn.layers.length][][];
+            state.previousBieses = new double[nn.layers.length][];
         }
 
-        double[][][] deltaWs = previousState.deltaWs;
-        double[][] previousBiases = previousState.prevousBieses;
+        double[][][] deltaWs = state.deltaWs;
+        double[][] previousBiases = state.previousBieses;
 
         Layer ol = nn.layers[nn.layers.length - 1]; // Выходной слой
 
@@ -73,7 +78,5 @@ public class TeacherBackPropagation {
                 previousBiases[k+1][i] = biasDelta;
             }
         }
-        PreviousState previousState1 = new PreviousState(deltaWs, previousBiases);
-        return previousState1;
     }
 }
